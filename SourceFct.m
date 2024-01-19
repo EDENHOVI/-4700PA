@@ -9,7 +9,7 @@ if ~isstruct(InputParas)
     E = InputParas;
 
 else
-    E = InputParas.E0*exp(-(t-InputParas.t0)^2/InputParas.Wg^2) *exp(1i*(InputParas.we*t + InputParas.phi))
+    E = InputParas.E0*exp(-(t-InputParas.t0)^2/InputParas.wg^2) *exp(1i*(InputParas.we*t + InputParas.phi));
 end
 end
 

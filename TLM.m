@@ -1,4 +1,4 @@
-addpath('/Users/EdenHovi/Desktop/ELEC_4700_Proj/4700PAS/functions.m')
+%addpath('/Users/EdenHovi/Desktop/ELEC_4700_Proj/4700PAS/functions.m')
 
 set(0, 'defaultaxesfontsize',20)
 set(0, 'DefaultFigureWindowStyle','docked')
@@ -16,12 +16,15 @@ c_hb = 1.05457266913e-34;           %Dirac constant
 c_h =c_hb*2*pi;
 
 
+RL = 0.9i; % Mirror coefficient parameter (left side/entry side)
+RR = 0.9i; %Mirror coefficient parameter (right side/output side)
+
 InputParasL.E0 = 1e5;
-InputParasL.we = 0;
-InputParasL.t0 = 2e-12;
-InputParasL.wg = 5e-13;
-InputParasL.phi = 0;
-InputParasR = 0;
+InputParasL.we = 2.51e10;
+InputParasL.t0 = 1e-12;
+InputParasL.wg = 2.5e-13;
+InputParasL.phi = 0.5;
+InputParasR = 4;
 
 n_g = 3.15;
 vg = c_c/n_g*1e2;
@@ -32,7 +35,7 @@ plotN = 10;
 
 L = 1000e-6*1e2;
 XL = [0,L];
-YL = [0,InputParasL.E0];
+YL = [-InputParasL.E0,InputParasL.E0]; %Changed here
 
 Nz = 500;
 dz = L/(Nz-1);
@@ -59,14 +62,19 @@ ErN = @SourceFct;
 t = 0;
 time(1) = t;
 
-InputL(1) = Ef1(t,InputParasL);
+InputL(1) = Ef1(t, InputParasL);
 InputR(1) = ErN(t, InputParasR);
 
 OutputR(1) = Ef(Nz);
 OutputL(1)= Er(1);
 
 Ef(1) = InputL(1);
+
 Er(Nz)= InputR(1);
+
+
+
+
 
 figure('name', 'Fields')
 subplot(3,1,1)
@@ -95,14 +103,18 @@ for i = 2:Nt
     InputL(i) = Ef1(t, InputParasL);
     InputR(i) = ErN(t,0);
 
-    Ef(1) = InputL(i);
-    Er(Nz) = InputR(i);
-
+    %Ef(1) = InputL(i);
+    %Er(Nz) = InputR(i);
+    Er(Nz) = InputR(i) + RR*Ef(Nz);
+    Ef(1)= InputL(i) + RL*Er(1);
+    
     Ef(2:Nz) = fsync*Ef(1:Nz-1);
-    Er(2:Nz-1) = fsync*Ef(2:Nz);
+    Er(1:Nz-1) = fsync*Er(2:Nz);
 
-OutputR(i) = Ef(Nz);
-OutputL(i) = Er(1);
+%OutputR(i) = Ef(Nz);
+    OutputR(i) = Ef(Nz)*(1-RR);
+    OutputL(i) = Er(1)*(1-RL);
+%OutputL(i) = Er(1);
 
 
     if mod(i,plotN) == 0
@@ -141,3 +153,5 @@ OutputL(i) = Er(1);
     end
 
 end
+
+%SourceFct

@@ -1,9 +1,11 @@
-set(0, 'defaultaxesfontsize',20);
-set(0, 'DefaultFigureWindowStyle','docked');
-set(0, 'Defaultaxeslinewidth',2);
-set(0, 'Defaultaxeslinewidth'2);
+%addpath('/Users/EdenHovi/Desktop/ELEC_4700_Proj/4700PAS/functions.m')
 
-set(0, 'DefaultFigureWindowStyle', 'docked');
+set(0, 'defaultaxesfontsize',20)
+set(0, 'DefaultFigureWindowStyle','docked')
+set(0, 'Defaultaxeslinewidth',2);
+set(0, 'Defaultaxeslinewidth',2)
+
+set(0, 'DefaultFigureWindowStyle', 'docked')
 
 c_c = 299792458;            % m/s TWM speed of light
 c_eps_0 = 8.8542149e-12;    % F/m vacuum permitivitty
@@ -14,12 +16,15 @@ c_hb = 1.05457266913e-34;           %Dirac constant
 c_h =c_hb*2*pi;
 
 
+RL = 0.9i; % Mirror coefficient parameter (left side/entry side)
+RR = 0.9i; %Mirror coefficient parameter (right side/output side)
+
 InputParasL.E0 = 1e5;
-InputParasL.we = 0;
-InputParasL.t0 = 2e-12;
-InputParasL.wg = 5e-13;
-InputParasL.phi = 0;
-InputParasR = 0;
+InputParasL.we = 2.51e10;
+InputParasL.t0 = 1e-12;
+InputParasL.wg = 2.5e-13;
+InputParasL.phi = 0.5;
+InputParasR = 4;
 
 n_g = 3.15;
 vg = c_c/n_g*1e2;
@@ -30,7 +35,7 @@ plotN = 10;
 
 L = 1000e-6*1e2;
 XL = [0,L];
-YL = [0,InputParasL.E0];
+YL = [-InputParasL.E0,InputParasL.E0]; %Changed here
 
 Nz = 500;
 dz = L/(Nz-1);
@@ -41,7 +46,7 @@ Nt = floor(2*Nz);
 tmax = Nt*dt;
 t_L = dt*Nz;        %time to travel length
 
-z = linespace(0,L,Nz).';      %Nz points, Nz-1 segments
+z = linspace(0,L,Nz).';      %Nz points, Nz-1 segments
 time = nan(1,Nt);
 InputL = nan(1,Nt);
 InputR = nan(1,Nt);
@@ -57,17 +62,23 @@ ErN = @SourceFct;
 t = 0;
 time(1) = t;
 
-InputL(1) = Ef1(t,InputParasL);
+InputL(1) = Ef1(t, InputParasL);
 InputR(1) = ErN(t, InputParasR);
 
 OutputR(1) = Ef(Nz);
 OutputL(1)= Er(1);
 
-Ef(1) = InputL(1);
-Er(Nz)= InputR(1);
+%Ef(1) = InputL(1);
+Ef(1)= InputL(i) + RL*Er(1);
+
+%Er(Nz)= InputR(1);
+Er(Nz) = InputR(i) + RR*Ef(Nz);
+
+
+
 
 figure('name', 'Fields')
-Subplot(3,1,1)
+subplot(3,1,1)
 plot(z*10000, real(Ef), 'r');
 hold off
 xlabel('z(\mum)')
@@ -83,14 +94,12 @@ plot(time*1e12, real(OutputR), 'r--');
 plot(time*1e12,real(InputR), 'b'); hold on
 plot (time*1e12,real(OutputL), 'b');
 xlabel('time(ps)')
-ylabel
-
-
+ylabel('E')
 hold off
 
 for i = 2:Nt
     t = dt*(i-1);
-    time(i) = t
+    time(i) = t;
 
     InputL(i) = Ef1(t, InputParasL);
     InputR(i) = ErN(t,0);
@@ -99,7 +108,7 @@ for i = 2:Nt
     Er(Nz) = InputR(i);
 
     Ef(2:Nz) = fsync*Ef(1:Nz-1);
-    Er(2:Nz-1) = fsync*Ef(2:Nz);
+    Er(1:Nz-1) = fsync*Er(2:Nz);
 
 OutputR(i) = Ef(Nz);
 OutputL(i) = Er(1);
@@ -141,3 +150,5 @@ OutputL(i) = Er(1);
     end
 
 end
+
+%SourceFct
