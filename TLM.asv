@@ -20,9 +20,9 @@ RL = 0.9i; % Mirror coefficient parameter (left side/entry side)
 RR = 0.9i; %Mirror coefficient parameter (right side/output side)
 
 InputParasL.E0 = 1e5;
-InputParasL.we = 2.51e10;
+InputParasL.we = 4.1e10;
 InputParasL.t0 = 1e-12;
-InputParasL.wg = 2.5e-13;
+InputParasL.wg = 1;
 InputParasL.phi = 0.5;
 InputParasR = 4;
 
@@ -37,12 +37,12 @@ L = 1000e-6*1e2;
 XL = [0,L];
 YL = [-InputParasL.E0,InputParasL.E0]; %Changed here
 
-Nz = 500;
+Nz = 100;
 dz = L/(Nz-1);
 dt = dz/vg;
 fsync = dt*vg/dz;
 
-Nt = floor(2*Nz);
+Nt = floor(8*Nz);
 tmax = Nt*dt;
 t_L = dt*Nz;        %time to travel length
 
@@ -68,11 +68,10 @@ InputR(1) = ErN(t, InputParasR);
 OutputR(1) = Ef(Nz);
 OutputL(1)= Er(1);
 
-%Ef(1) = InputL(1);
-Ef(1)= InputL(i) + RL*Er(1);
+Ef(1) = InputL(1);
 
-%Er(Nz)= InputR(1);
-Er(Nz) = InputR(i) + RR*Ef(Nz);
+Er(Nz)= InputR(1);
+
 
 
 
@@ -102,16 +101,34 @@ for i = 2:Nt
     time(i) = t;
 
     InputL(i) = Ef1(t, InputParasL);
-    InputR(i) = ErN(t,0);
+    InputR(i) = ErN(t,InputParasR); 
 
-    Ef(1) = InputL(i);
-    Er(Nz) = InputR(i);
+    %Ef(1) = InputL(i); %for simulating forward field without reflections
+    %Er(Nz) = InputR(i); %for simulating reverse field without reflections
 
+    Er(Nz) = InputR(i) + RR*Ef(Nz); % this is for the reverse fieldhaving the same number of iterations as the loop
+                                    % but with reverse wave summing
+                                    % to the initial forward travelling
+                                    % wave
+
+    Ef(1)= InputL(i) + RL*Er(1); % this if for the forward field having the same number of iterations as the loop
+                                 % but with forward wave basially summing
+                                 % with the previous reverse travelling
+                                 % wave
     Ef(2:Nz) = fsync*Ef(1:Nz-1);
     Er(1:Nz-1) = fsync*Er(2:Nz);
 
-OutputR(i) = Ef(Nz);
-OutputL(i) = Er(1);
+    %OutputR(i) = Ef(Nz);      %for plotting simulated forward field once
+    OutputR(i) = Ef(Nz)*(1-RR);% this is for plotting the reverse fieldhaving the same number of iterations as the loop
+                               % but with reverse wave summing
+                               % to the initial forward travelling
+                               % wave
+
+    OutputL(i) = Er(1)*(1-RL); % this if for plotting the forward field having the same number of iterations as the loop
+                                 % but with forward wave basially summing
+                                 % with the previous reverse travelling
+                                 % wave
+    %OutputL(i) = Er(1);      %for plotting simulated reversed field once
 
 
     if mod(i,plotN) == 0
