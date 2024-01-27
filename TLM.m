@@ -16,13 +16,22 @@ c_hb = 1.05457266913e-34;           %Dirac constant
 c_h =c_hb*2*pi;
 
 
-RL = 0.9i; % Mirror coefficient parameter (left side/entry side)
+RL = 0.9i; % Mirror coefficient parameter (left side/entry side) 
 RR = 0.9i; %Mirror coefficient parameter (right side/output side)
 
+beta_r = 80;
+beta_i = 8;
+beta = ones(size(z))*(beta_r + 1i*beta_i); % gain for the waves beta = beta_r + beta_i
+exp_det = exp(-1i*dz*beta); % the exponential factor being multiplied by the original wave to give it gain
+                            % if Beta_i is negative there is a gain
+                            %beta_r determines phase shift (whether
+                            %positive of negative)
+
+
 InputParasL.E0 = 1e5;
-InputParasL.we = 5e12;
+InputParasL.we = 0.5e13;
 InputParasL.t0 = 1e-12;
-InputParasL.wg = 500;
+InputParasL.wg = 5e-13;
 InputParasL.phi = 0.5;
 InputParasR = 4;
 
@@ -115,10 +124,17 @@ for i = 2:Nt
                                  % but with forward wave basially summing
                                  % with the previous reverse travelling
                                  % wave
-    Ef(2:Nz) = fsync*Ef(1:Nz-1);
-    Er(1:Nz-1) = fsync*Er(2:Nz);
+
+    %Ef(2:Nz) = fsync*Ef(1:Nz-1); %normal forward without gain
+    %Er(1:Nz-1) = fsync*Er(2:Nz); %normal reverse wave without gain
+
+
+    Ef(2:Nz) = fsync*exp_det(1:Nz-1).*Ef(1:Nz-1); %normal forward with gain
+    Er(1:Nz-1)= fsync* exp_det(2:Nz).*Er(2:Nz);%normal forward without gain
+
 
     %OutputR(i) = Ef(Nz);      %for plotting simulated forward field once
+
     OutputR(i) = Ef(Nz)*(1-RR);% this is for plotting the reverse fieldhaving the same number of iterations as the loop
                                % but with reverse wave summing
                                % to the initial forward travelling
@@ -128,6 +144,7 @@ for i = 2:Nt
                                  % but with forward wave basially summing
                                  % with the previous reverse travelling
                                  % wave
+
     %OutputL(i) = Er(1);      %for plotting simulated reversed field once
 
 
@@ -163,9 +180,14 @@ for i = 2:Nt
         ylabel('0')
         legend('Left Input', 'Right Output', 'Right Input', 'Left Output', 'Location', 'east')
         hold off
-        pause(0.01)
-    end
 
+        %fftOutput= fftshift(fft(OutputR));
+        %omega = fftshift(wspace(time));
+        %plot(abs(fftOutput))
+        pause(0.01)
+        %hold off
+    end
+    
 end
 
 %SourceFct
