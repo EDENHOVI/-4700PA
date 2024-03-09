@@ -59,7 +59,7 @@ plot(VIN,V5);
 plot(VIN,V3);
 hold off
 legend('Vo', 'V3')
-%-------------------------------------------------------------------------
+%------------------------------------part 2-------------------------------------
 % Define angular frequency range
 w = linspace(0, 10, 100); % Example angular frequency range from 0 to 10
 
@@ -93,3 +93,58 @@ xlabel('Angular Frequency (\omega)')
 ylabel('Gain (V5/V1) (dB)')
 title('Gain (V5/V1) in dB as a function of Angular Frequency')
 legend('Vo/VIN')
+%---------------------------------------part 3--------------------------------------------------
+
+% Define parameters
+std_dev = 0.05; % Standard deviation for normal distribution
+omega = pi; % Angular frequency
+
+% Generate random perturbations on C using a normal distribution
+num_samples = 10000; % Number of samples
+perturbations = std_dev * randn(num_samples, 1);
+
+% Calculate gain for each perturbation
+gains = zeros(num_samples, 1);
+for i = 1:num_samples
+    % Perturb C
+    Cp = C1 + perturbations(i);
+    
+    % Recalculate G matrix
+    Cp_matrix = [0 0 0 0 0 0 0 0;
+                 0 0 0 0 0 0 0 0;
+                 0 0 0 0 0 -L 0 0;
+                 -Cp Cp 0 0 0 0 0 0;
+                 Cp -Cp 0 0 0 0 0 0;
+                 0 0 0 0 0 0 0 0;
+                 0 0 0 0 0 0 0 0;
+                 0 0 0 0 0 0 0 0];
+    
+    Gp = [1 0 0 0 0 0 0 0;
+          0 0 0 0 0 0 Alpha 0;
+          0 1 -1 0 0 0 0 0;
+          G1 -G1 0 0 0 0 0 -1;
+          -G1 (G1+G2) 0 0 0 -1 0 0;
+          0 0 G3 0 0 -1 0 0;
+          0 0 Alpha*G3 G4 -G4 0 0 0;
+          0 0 0 -G4 (Go+G4) 0 0 0];
+    
+    % Calculating Vop for perturbed C
+    Vop_perturbed = Gp\F;
+    
+    % Calculating gain for perturbed C
+    gains(i) = Vop_perturbed(5) / Vin;
+end
+
+% Plot gain as a function of perturbed C
+figure
+scatter(perturbations, gains)
+xlabel('Perturbations on C')
+ylabel('Gain')
+title('Gain as a function of Perturbations on C')
+
+% Creating histogram of the gain
+figure
+histogram(gains, 100)
+xlabel('Gain')
+ylabel('Frequency')
+title('Histogram of Gain')
